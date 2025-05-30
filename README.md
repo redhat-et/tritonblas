@@ -6,6 +6,7 @@ BLAS routines written in Triton
 ### Level 1
 
 * dot
+* axpy
 
 ### Level 2
 
