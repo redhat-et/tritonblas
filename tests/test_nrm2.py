@@ -15,4 +15,4 @@ def test_nrm2():
     triton_output = tb.nrm2(x)
     torch.output = torch.linalg.norm(x)
     
-    
+    assert_close(triton_output, torch_output, rtol=rtol)
