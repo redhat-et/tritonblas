@@ -3,8 +3,7 @@ import triton
 import triton.language as tl
 
 
-def is_cuda():
-    return triton.runtime.driver.active.get_current_target().backend == "cuda"
+DEVICE = triton.runtime.driver.active.get_current_target().backend
 
 
 def get_autotune_config():
@@ -66,7 +65,7 @@ def dot_kernel(
 
 def dot(x: torch.Tensor, y: torch.Tensor):
     output = torch.empty_like(x)
-    assert x.is_cuda and y.is_cuda and output.is_cuda
+    assert x.device == y.device and x.device == output.device
     n_elements = output.numel()
 
     def grid(META): return (triton.cdiv(n_elements, META['BLOCK_SIZE']), )
