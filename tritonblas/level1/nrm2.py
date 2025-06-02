@@ -48,5 +48,4 @@ def get_autotune_config():
 
 @triton.jit
 def nrm2_kernel(
-    
 )
