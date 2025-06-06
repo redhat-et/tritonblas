@@ -2,12 +2,14 @@ import torch
 import tritonblas as tb
 import triton
 from triton.testing import assert_close
-from .utils import is_hip_mi200, get_device
+from .utils import get_rtol
+
+
+DEVICE = triton.runtime.driver.active.get_current_target().backend
 
 
 def test_axpy():
     size = 98432
-    DEVICE = get_device()
 
     torch.manual_seed(0)
     dtype = torch.float16
@@ -18,5 +20,5 @@ def test_axpy():
     triton_output = tb.axpy(x, y, alpha)
     torch_output = (alpha * x) + y
 
-    rtol = 1e-2 if is_hip_mi200() else 0
+    rtol = get_rtol()
     assert_close(triton_output, torch_output, rtol=rtol)
