@@ -2,18 +2,12 @@ import torch
 import tritonblas as tb
 import triton
 from triton.testing import assert_close
-
-
-DEVICE = triton.runtime.driver.active.get_current_target().backend
-
-
-# TODO either make this shared or make a shared rtol function
-def is_hip_mi200():
-    return DEVICE == "hip" and triton.runtime.driver.active.get_current_target().arch == "gfx90a"
+from .utils import is_hip_mi200, get_device
 
 
 def test_axpy():
     size = 98432
+    DEVICE = get_device()
 
     torch.manual_seed(0)
     dtype = torch.float16
