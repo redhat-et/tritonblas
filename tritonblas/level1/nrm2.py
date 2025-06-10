@@ -12,7 +12,7 @@ def get_autotune_config():
         ),
         triton.Config(
             {
-                "BLOCK_SIZE": 524,
+                "BLOCK_SIZE": 512,
             },
         ),
         triton.Config(
@@ -57,16 +57,16 @@ def nrm2_kernel(
     mask = offsets < n_elements
     x = tl.load(x_ptr + offsets, mask=mask)
     
-    partial = tl.sum(x**2)
-    total = tl.reduce(partial, axis=0, op=tl.sum)
-    output = tl.sqrt(total)
+    partial = tl.sum(x * x)  # sum of squares for a program's assigned chunk
+    total = tl.sum(partial[None], axis=0)  # sum scalars from all programs
+    output = tl.sqrt(total)  # square root of total 
 
     tl.store(output_ptr, output)
 
 
-def nrm2(x: torch.Tensor, y: torch.Tensor):
-    output = torch.Tensor()
-    assert x.device == y.device and x.device == output.device
+def nrm2(x: torch.Tensor):
+    output = torch.Tensor()  # output is a single scalar value
+    assert x.device == output.device
     n_elements = output.numel()
 
     def grid(META): return (triton.cdiv(n_elements, META['BLOCK_SIZE']), )
