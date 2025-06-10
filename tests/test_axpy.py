@@ -2,14 +2,11 @@ import torch
 import tritonblas as tb
 import triton
 from triton.testing import assert_close
+from .utils import get_rtol
 
 
-DEVICE = "cuda"
+DEVICE = triton.runtime.driver.active.get_current_target().backend
 
-# TODO either make this shared or make a shared rtol function
-def is_hip_mi200():
-    target = triton.runtime.driver.active.get_current_target()
-    return target.backend == 'hip' and target.arch == 'gfx90a'
 
 def test_axpy():
     size = 98432
@@ -22,6 +19,6 @@ def test_axpy():
 
     triton_output = tb.axpy(x, y, alpha)
     torch_output = (alpha * x) + y
-    
-    rtol = 1e-2 if is_hip_mi200() else 0
+
+    rtol = get_rtol()
     assert_close(triton_output, torch_output, rtol=rtol)
