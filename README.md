@@ -7,6 +7,7 @@ BLAS routines written in Triton
 
 * dot
 * axpy
+* nrm2
 
 ### Level 2
 
