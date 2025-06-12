@@ -65,9 +65,9 @@ def nrm2_kernel(
 
 
 def nrm2(x: torch.Tensor):
-    output = torch.Tensor()  # output is a single scalar value
+    output = torch.empty(())  # output is a single scalar value
     assert x.device == output.device
-    n_elements = output.numel()
+    n_elements = x.numel()
 
     def grid(META): return (triton.cdiv(n_elements, META['BLOCK_SIZE']), )
 
