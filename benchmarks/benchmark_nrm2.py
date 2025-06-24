@@ -28,7 +28,7 @@ def benchmark_nrm2(size, provider):
     quantiles = [0.5, 0.2, 0.8]
     if provider == 'torch':
         ms, min_ms, max_ms = triton.testing.do_bench(
-            lambda: torch.sqrt(torch.sum(x * x)), quantiles=quantiles)
+            lambda: torch.linalg.norm(x), quantiles=quantiles)
     if provider == 'triton':
         ms, min_ms, max_ms = triton.testing.do_bench(
             lambda: tb.nrm2(x), quantiles=quantiles)
