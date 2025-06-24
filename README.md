@@ -14,6 +14,8 @@ BLAS routines written in Triton
 
 ### Level 3
 
+* gemm
+
 ## Testing
 
 The tritonblas project currently uses pytest for unittesting the routines.
