@@ -111,14 +111,14 @@ def nrm2(x: torch.Tensor):
     Returns:
         L2 norm of the input tensor (scalar).
     """
-    output = torch.zeros((1,))
+    output = torch.zeros((1,), device=x.device)
     assert x.device == output.device
     n_elements = x.numel()
 
     # Allocate enough memory for the partial sums
     min_block_size = min(config.kwargs['BLOCK_SIZE'] for config in get_autotune_config())
     max_partial_programs = triton.cdiv(n_elements, min_block_size)
-    partial_sums = torch.zeros(max_partial_programs)
+    partial_sums = torch.zeros(max_partial_programs, device=x.device)
 
     # Capture the actual grid size used by autotuning
     auto_grid = None
