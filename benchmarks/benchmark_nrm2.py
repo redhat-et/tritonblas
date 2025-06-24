@@ -28,12 +28,12 @@ def benchmark_nrm2(size, provider):
     quantiles = [0.5, 0.2, 0.8]
     if provider == 'torch':
         ms, min_ms, max_ms = triton.testing.do_bench(
-            lambda: torch.linalg.norm(x), quantiles=quantiles)
+            lambda: torch.sqrt(torch.sum(x * x)), quantiles=quantiles)
     if provider == 'triton':
         ms, min_ms, max_ms = triton.testing.do_bench(
             lambda: tb.nrm2(x), quantiles=quantiles)
 
-    def gbps(ms): return x.numel() * x.element_size() / ms * 1e-6
+    def gbps(ms): return 2 * x.numel() * x.element_size() / ms * 1e-6
     return gbps(ms), gbps(max_ms), gbps(min_ms)
 
 
@@ -45,4 +45,4 @@ def test_nrm2(benchmark):
 
 
 if __name__ == "__main__":
-    benchmark_nrm2.run(print_data=True, show_plots=True) 
+    benchmark_nrm2.run(print_data=True, show_plots=False) 
