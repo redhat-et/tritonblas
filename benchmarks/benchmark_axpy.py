@@ -1,7 +1,10 @@
 import torch
 import triton
-import tritonblas as tb
 
+from utils import add_tritonblas_lib
+
+add_tritonblas_lib()
+import tritonblas as tb
 
 DEVICE = "cuda"
 
