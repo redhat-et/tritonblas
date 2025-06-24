@@ -3,9 +3,6 @@ import triton
 import triton.language as tl
 
 
-DEVICE = triton.runtime.driver.active.get_current_target().backend
-
-
 def get_autotune_config():
     return [
         triton.Config(
