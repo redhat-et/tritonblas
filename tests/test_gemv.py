@@ -11,10 +11,10 @@ DEVICE = triton.runtime.driver.active.get_current_target().backend
 
 
 def test_gemv():
-    m, n = 128, 64
+    m, n = 512, 64
 
     torch.manual_seed(0)
-    dtype = torch.float16
+    dtype = torch.float32
     a = torch.randn(m, n, device=DEVICE, dtype=dtype)
     x = torch.randn(n, device=DEVICE, dtype=dtype)
 
