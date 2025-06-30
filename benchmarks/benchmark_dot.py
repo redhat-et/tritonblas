@@ -1,5 +1,9 @@
 import torch
 import triton
+
+from utils import add_tritonblas_lib
+
+add_tritonblas_lib()
 import tritonblas as tb
 
 
@@ -19,7 +23,7 @@ DEVICE = "cuda"
         styles=[('blue', '-'), ('green', '-')],  # Line styles.
         ylabel='GB/s',  # Label name for the y-axis.
         # Name for the plot. Used also as a file name for saving the plot.
-        plot_name='vector-add-performance',
+        plot_name='dot-performance',
         # Values for function arguments not in `x_names` and `y_name`.
         args={},
     ))
@@ -43,3 +47,7 @@ def test_dot(benchmark):
         benchmark_dot.run(print_data=False, show_plots=False)
 
     benchmark(run_dot_benchmark)
+
+
+if __name__ == "__main__":
+    benchmark_dot.run(print_data=True, show_plots=False)
