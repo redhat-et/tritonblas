@@ -6,7 +6,7 @@ from utils import add_tritonblas_lib
 add_tritonblas_lib()
 import tritonblas as tb
 
-DEVICE = "cuda"
+DEVICE = torch.accelerator.current_accelerator()
 
 
 @triton.testing.perf_report(
