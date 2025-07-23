@@ -82,8 +82,8 @@ def gemv_kernel(
     # Compute dot product of row of A and entire x vector in k blocks
     accumulator = tl.zeros((BLOCK_SIZE_M,), dtype=tl.float32)
     for k in range(0, tl.cdiv(K, BLOCK_SIZE_K)):
-        a_mask = (offs_am[:, None] < M) & k_mask[None, :]
         k_mask = offs_k < K - k * BLOCK_SIZE_K
+        a_mask = (offs_am[:, None] < M) & k_mask[None, :]
         
         # Load BLOCK_SIZE_M x BLOCK_SIZE_K elements from A and BLOCK_SIZE_K elements from x
         tiled_a = tl.load(a_block, mask=a_mask, other=0.0)
