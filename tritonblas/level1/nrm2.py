@@ -38,6 +38,13 @@ def get_autotune_config():
     ]
 
 
+def next_power_of_2(n):
+    """Return the next power of 2 greater than or equal to n."""
+    if n <= 0:
+        return 1
+    return 1 << (n - 1).bit_length()
+
+
 @triton.autotune(
     configs=get_autotune_config(),
     key=["n_elements"]
@@ -61,7 +68,7 @@ def nrm2_partial(
     block_start = pid * BLOCK_SIZE
     offsets = block_start + tl.arange(0, BLOCK_SIZE)
     mask = offsets < n_elements
-    x = tl.load(x_ptr + offsets, mask=mask)
+    x = tl.load(x_ptr + offsets, mask=mask, other=0.0)
 
     exp = x * x
     sum_of_squares = tl.sum(exp)
@@ -74,22 +81,23 @@ def nrm2_final(
     partial_ptr,
     final_ptr,
     n_partial,
+    BLOCK_SIZE_FINAL: tl.constexpr,
 ):
-    """Kernel to compute the final sum of the partial sums.
+    """Kernel to compute the final sum of the partial sums using parallel reduction.
 
     Args:
         partial_ptr: Pointer to the partial sums.
         final_ptr: Pointer to the final sum.
         n_partial: Number of partial sums calculated by the partial kernel.
+        BLOCK_SIZE_FINAL: Block size for loading partial sums (should equal n_partial).
     """
-    total = tl.zeros((), dtype=tl.float32)
+    offsets = tl.arange(0, BLOCK_SIZE_FINAL)
+    mask = offsets < n_partial
+    partial_vals = tl.load(partial_ptr + offsets, mask=mask, other=0.0)
     
-    # Process partial sums
-    for i in range(n_partial):
-        partial_val = tl.load(partial_ptr + i)
-        total += partial_val
-    
-    tl.store(final_ptr, total)
+    total = tl.sum(partial_vals)
+    output = tl.sqrt(total)
+    tl.store(final_ptr, output)
 
 
 def nrm2(x: torch.Tensor):
@@ -133,11 +141,14 @@ def nrm2(x: torch.Tensor):
         n_elements
     )
 
+    # Round up auto_grid to next power of 2 for Triton compatibility
+    block_size_final = next_power_of_2(auto_grid)
+    
     nrm2_final[(1,)](
         partial_sums,
         output,
-        auto_grid
+        auto_grid,
+        BLOCK_SIZE_FINAL=block_size_final # needs to be a power of 2 for Triton compatibility
     )
 
-    result = torch.sqrt(output)
-    return result
+    return output
