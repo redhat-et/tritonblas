@@ -38,13 +38,6 @@ def get_autotune_config():
     ]
 
 
-def next_power_of_2(n):
-    """Return the next power of 2 greater than or equal to n."""
-    if n <= 0:
-        return 1
-    return 1 << (n - 1).bit_length()
-
-
 @triton.autotune(
     configs=get_autotune_config(),
     key=["n_elements"]
@@ -56,14 +49,7 @@ def nrm2_partial(
     n_elements,
     BLOCK_SIZE: tl.constexpr
 ):
-    """Kernel to compute the partial sums of the squares of the elements of the input tensor.
-
-    Args:
-        x_ptr: Pointer to the input tensor.
-        partial_ptr: Pointer to the partial sums.
-        n_elements: Number of elements in the input tensor.
-        BLOCK_SIZE: Block size autotuned by the compiler.
-    """
+    """Kernel to compute the partial sums of the squares of the elements of the input tensor."""
     pid = tl.program_id(axis=0)
     block_start = pid * BLOCK_SIZE
     offsets = block_start + tl.arange(0, BLOCK_SIZE)
@@ -76,22 +62,17 @@ def nrm2_partial(
     tl.store(partial_ptr + pid, sum_of_squares)
 
 
+@triton.heuristics(values={'BLOCK_SIZE': lambda args: triton.next_power_of_2(args['n_partial'])})
 @triton.jit
 def nrm2_final(
     partial_ptr,
     final_ptr,
     n_partial,
-    BLOCK_SIZE_FINAL: tl.constexpr,
+    BLOCK_SIZE: tl.constexpr,
 ):
-    """Kernel to compute the final sum of the partial sums using parallel reduction.
+    """Kernel to compute the final sum of the partial sums using parallel reduction."""
 
-    Args:
-        partial_ptr: Pointer to the partial sums.
-        final_ptr: Pointer to the final sum.
-        n_partial: Number of partial sums calculated by the partial kernel.
-        BLOCK_SIZE_FINAL: Block size for loading partial sums (should equal n_partial).
-    """
-    offsets = tl.arange(0, BLOCK_SIZE_FINAL)
+    offsets = tl.arange(0, BLOCK_SIZE)
     mask = offsets < n_partial
     partial_vals = tl.load(partial_ptr + offsets, mask=mask, other=0.0)
     
@@ -101,54 +82,34 @@ def nrm2_final(
 
 
 def nrm2(x: torch.Tensor):
-    """Compute the L2 norm of a tensor using a two-kernel parallel reduction.
-
-    Workflow:
-    1. Partial Kernel (Distributed): Divides the input vector into blocks,
-       where each GPU thread block computes the sum of squares for its assigned
-       chunk of elements. This produces multiple partial sums.
-       
-    2. Final Kernel (Reduction): A single thread sequentially sums all the
-       partial sums from step 1 to get the total sum of squares.
-       
-    3. Square Root: Takes the square root of the total sum to get the L2 norm.
-
-    Args:
-        x: Input tensor.
-
-    Returns:
-        L2 norm of the input tensor (scalar).
-    """
+    """Compute the L2 norm of a tensor using a two-kernel parallel reduction."""
     output = torch.zeros((1,), device=x.device)
     assert x.device == output.device
     n_elements = x.numel()
 
-    # Allocate enough memory for the partial sums
+    # Allocate memory for partial sums
     min_block_size = min(config.kwargs['BLOCK_SIZE'] for config in get_autotune_config())
     max_partial_programs = triton.cdiv(n_elements, min_block_size)
     partial_sums = torch.zeros(max_partial_programs, device=x.device)
 
-    # Capture the actual grid size used by autotuning
-    auto_grid = None
+    # Get number of partial sums calculated by the partial kernel
+    # to use in the heuristics for the final kernel
+    n_partials = None
     def grid(META):
-        nonlocal auto_grid
-        auto_grid = triton.cdiv(n_elements, META['BLOCK_SIZE'])
-        return (auto_grid,)
-    
+        nonlocal n_partials
+        n_partials = triton.cdiv(n_elements, META['BLOCK_SIZE'])
+        return (n_partials,)
+
     nrm2_partial[grid](
         x,
         partial_sums,
         n_elements
     )
 
-    # Round up auto_grid to next power of 2 for Triton compatibility
-    block_size_final = next_power_of_2(auto_grid)
-    
     nrm2_final[(1,)](
         partial_sums,
         output,
-        auto_grid,
-        BLOCK_SIZE_FINAL=block_size_final # needs to be a power of 2 for Triton compatibility
+        n_partials
     )
 
     return output
