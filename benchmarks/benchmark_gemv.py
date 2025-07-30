@@ -1,5 +1,9 @@
 import torch
 import triton
+
+from utils import add_tritonblas_lib
+
+add_tritonblas_lib()
 import tritonblas as tb
 
 
