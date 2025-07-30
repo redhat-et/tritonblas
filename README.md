@@ -10,6 +10,8 @@ BLAS routines written in Triton
 
 ### Level 2
 
+* gemv
+
 ### Level 3
 
 ## Testing
