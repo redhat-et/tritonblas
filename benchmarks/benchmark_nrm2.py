@@ -3,7 +3,7 @@ import triton
 import tritonblas as tb
 
 
-DEVICE = "cuda"
+DEVICE = triton.runtime.driver.active.get_active_torch_device()
 
 
 @triton.testing.perf_report(
