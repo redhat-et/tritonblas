@@ -1,9 +1,13 @@
 import torch
 import triton
+
+from utils import add_tritonblas_lib
+
+add_tritonblas_lib()
 import tritonblas as tb
 
 
-DEVICE = torch.accelerator.current_accelerator()
+DEVICE = triton.runtime.driver.active.get_active_torch_device()
 
 
 @triton.testing.perf_report(
