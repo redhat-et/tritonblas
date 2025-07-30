@@ -6,3 +6,4 @@ from .level1.axpy import axpy
 from .level2.gemv import gemv
 
 # Level 3 BLAS functions
+from .level3.gemm import gemm
