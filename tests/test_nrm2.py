@@ -5,7 +5,7 @@ import tritonblas as tb
 from .utils import get_rtol
 
 
-DEVICE = triton.runtime.driver.active.get_current_target().backend
+DEVICE = triton.runtime.driver.active.get_active_torch_device()
 
 
 def test_nrm2():
