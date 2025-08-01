@@ -1,7 +1,7 @@
 import torch
 import triton
-from triton.testing import assert_close
 import tritonblas as tb
+from triton.testing import assert_close
 from .utils import get_rtol
 
 
