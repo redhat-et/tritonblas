@@ -7,38 +7,70 @@ def get_autotune_config():
     return [
         triton.Config(
             {
-                "BLOCK_SIZE_M": 128,
-                "BLOCK_SIZE_K": 64,
-            },
-        ),
-        triton.Config(
-            {
                 "BLOCK_SIZE_M": 64,
-                "BLOCK_SIZE_K": 32,
-            },
-        ),
-        triton.Config(
-            {
-                "BLOCK_SIZE_M": 128,
-                "BLOCK_SIZE_K": 32,
-            },
-        ),
-        triton.Config(
-            {
-                "BLOCK_SIZE_M": 64,
-                "BLOCK_SIZE_K": 64,
+                "BLOCK_SIZE_K": 128,
             },
         ),
         triton.Config(
             {
                 "BLOCK_SIZE_M": 32,
-                "BLOCK_SIZE_K": 32,
+                "BLOCK_SIZE_K": 128,
             },
         ),
         triton.Config(
             {
-                "BLOCK_SIZE_M": 32,
+                "BLOCK_SIZE_M": 128,
+                "BLOCK_SIZE_K": 128,
+            },
+        ),
+        triton.Config(
+            {
+                "BLOCK_SIZE_M": 256,
                 "BLOCK_SIZE_K": 64,
+            },
+        ),
+        triton.Config(
+            {
+                "BLOCK_SIZE_M": 256,
+                "BLOCK_SIZE_K": 32,
+            },
+        ),
+        
+        triton.Config(
+            {
+                "BLOCK_SIZE_M": 16,
+                "BLOCK_SIZE_K": 128,
+            },
+        ),
+        triton.Config(
+            {
+                "BLOCK_SIZE_M": 16,
+                "BLOCK_SIZE_K": 256,
+            },
+        ),
+        triton.Config(
+            {
+                "BLOCK_SIZE_M": 8,
+                "BLOCK_SIZE_K": 128,
+            },
+        ),
+        
+        triton.Config(
+            {
+                "BLOCK_SIZE_M": 32,
+                "BLOCK_SIZE_K": 256,
+            },
+        ),
+        triton.Config(
+            {
+                "BLOCK_SIZE_M": 16,
+                "BLOCK_SIZE_K": 512,
+            },
+        ),
+        triton.Config(
+            {
+                "BLOCK_SIZE_M": 8,
+                "BLOCK_SIZE_K": 256,
             },
         ),
     ]
@@ -90,8 +122,7 @@ def gemv_kernel(
         tiled_x = tl.load(x_block, mask=k_mask, other=0.0)
         
         # Partial dot product
-        partial_result = tl.sum(tiled_a * tiled_x[None, :], axis=1)
-        accumulator += partial_result
+        accumulator += tl.sum(tiled_a * tiled_x[None, :], axis=1)
         
         a_block += BLOCK_SIZE_K * stride_ak
         x_block += BLOCK_SIZE_K * stride_x

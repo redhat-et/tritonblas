@@ -30,9 +30,9 @@ DEVICE = triton.runtime.driver.active.get_active_torch_device()
     )
 )
 def benchmark_gemv(M, K, provider):
-    A = torch.randn((M, K), device=DEVICE, dtype=torch.float16)
-    x = torch.randn(K, device=DEVICE, dtype=torch.float16)
-    y = torch.randn(M, device=DEVICE, dtype=torch.float16)
+    A = torch.randn((M, K), device=DEVICE, dtype=torch.float32)
+    x = torch.randn(K, device=DEVICE, dtype=torch.float32)
+    y = torch.randn(M, device=DEVICE, dtype=torch.float32)
     alpha = 0.42
     beta = 10
     quantiles = [0.5, 0.2, 0.8]
