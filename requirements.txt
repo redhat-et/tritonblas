@@ -1,5 +1,5 @@
 pytest
-torch
-triton
+torch>=2.7
+triton>=3.3
 matplotlib
 pandas
